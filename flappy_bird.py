@@ -4,6 +4,7 @@ import os
 import time
 import random
 
+pygame.font.init()
 # Setting windows dimensions for the game and loading all the sprites needed
 WIN_WIDTH = 500
 WIN_HEIGHT = 800
@@ -17,6 +18,7 @@ BASE_IMG = pygame.transform.scale2x(
 BG_IMG = pygame.transform.scale2x(
     pygame.image.load(os.path.join('imgs', 'bg.png')))
 
+STAT_FONT = pygame.font.SysFont('comicsans', 50)
 
 # Creating the key elements of the game: bird, pipe and base
 
@@ -152,11 +154,14 @@ class Base:
         win.blit(self.IMG, (self.x2, self.y))
 
 
-def draw_win(win, bird, pipes, base):
+def draw_win(win, bird, pipes, base, score):
     win.blit(BG_IMG, (0, 0))
 
     for pipe in pipes:
         pipe.draw(win)
+
+    text = STAT_FONT.render('Score: ' +str(score), 1, (255,255,255))
+    win.blit(text, (WIN_WIDTH - 10 - text.get_width(),10))
 
     base.draw(win)
     bird.draw(win)
@@ -194,13 +199,17 @@ def main():
 
         if add_pipe:
             score += 1
-            pipes.append(Pipe(700))
+            pipes.append(Pipe(600))
 
         for r in remove:
             pipes.remove(r)
+        
+        if bird.y  + bird.img.get_height() >= 730:
+            pass
+        
         base.move()
 
-        draw_win(win, bird, pipes, base)
+        draw_win(win, bird, pipes, base, score)
 
     pygame.quit()
     quit()
