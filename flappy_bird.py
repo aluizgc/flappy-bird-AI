@@ -22,6 +22,7 @@ STAT_FONT = pygame.font.SysFont('comicsans', 50)
 
 # Creating the key elements of the game: bird, pipe and base
 
+
 class Bird:
     IMGS = BIRDS_IMGS
     MAX_ROTATION = 25
@@ -160,8 +161,8 @@ def draw_win(win, bird, pipes, base, score):
     for pipe in pipes:
         pipe.draw(win)
 
-    text = STAT_FONT.render('Score: ' +str(score), 1, (255,255,255))
-    win.blit(text, (WIN_WIDTH - 10 - text.get_width(),10))
+    text = STAT_FONT.render('Score: ' + str(score), 1, (255, 255, 255))
+    win.blit(text, (WIN_WIDTH - 10 - text.get_width(), 10))
 
     base.draw(win)
     bird.draw(win)
@@ -203,10 +204,10 @@ def main():
 
         for r in remove:
             pipes.remove(r)
-        
-        if bird.y  + bird.img.get_height() >= 730:
+
+        if bird.y + bird.img.get_height() >= 730:
             pass
-        
+
         base.move()
 
         draw_win(win, bird, pipes, base, score)
@@ -216,3 +217,14 @@ def main():
 
 
 main()
+
+
+def run(config_path):
+    config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction,
+                                neat.DefaultSpeciesSet, neat.DefaultStagnation, config_path)
+
+
+if __name__ == "__main__":
+    local_dir = os.path.dirname(__file__)
+    config_path = os.path.join(local_dir, 'config-feedfoward.txt')
+    run(config_path)
