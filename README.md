@@ -5,7 +5,7 @@
   </a>
 
 ## This repository contains a replica of the game Flappy Bird along with the implementation of NEAT.
-## I didn't code this on my own, it was developed in a follow up tutorial of the channel [Tech With Tim](https://www.youtube.com/channel/UC4JX40jDee_tINbkjycV4Sg)
+## I didn't code this on my own, it was developed in a follow up tutorial from [Tech With Tim](https://www.youtube.com/channel/UC4JX40jDee_tINbkjycV4Sg)
 
 </p>
 <p align="center">
