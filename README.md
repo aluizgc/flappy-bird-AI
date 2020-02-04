@@ -1,7 +1,7 @@
 # AI learn to play Flappy Bird remake with NEAT and PyGame
 <p align="center">
   <a href="https://github.com/aluizgc/flappy-bird-AI">
-    <img src="./birbthumb.png" width="400">
+    <img src="./birbthumb.PNG" width="400">
   </a>
 
 ## This repository contains a replica of the game Flappy Bird along with the implementation of NEAT.
