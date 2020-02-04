@@ -1,30 +1,37 @@
+'''
+WARNING: THIS VERSION OF THE CODE WORKS BUT DOESN'T SHOW THE BIRDS OR THE GAME ITSELF AND I COULDN'T FIND WHY
+
 import pygame
 import neat
 import os
 import time
 import random
+import visualize
+import pickle
 
 pygame.font.init()
 # Setting windows dimensions for the game and loading all the sprites needed
 WIN_WIDTH = 500
 WIN_HEIGHT = 800
 
-BIRDS_IMGS = [pygame.transform.scale2x(pygame.image.load(os.path.join('imgs', 'bird1.png'))), pygame.transform.scale2x(
+bird_imgs = [pygame.transform.scale2x(pygame.image.load(os.path.join('imgs', 'bird1.png'))), pygame.transform.scale2x(
     pygame.image.load(os.path.join('imgs', 'bird2.png'))), pygame.transform.scale2x(pygame.image.load(os.path.join('imgs', 'bird3.png')))]
-PIPE_IMG = pygame.transform.scale2x(
+pipe_img = pygame.transform.scale2x(
     pygame.image.load(os.path.join('imgs', 'pipe.png')))
-BASE_IMG = pygame.transform.scale2x(
+base_img = pygame.transform.scale2x(
     pygame.image.load(os.path.join('imgs', 'base.png')))
-BG_IMG = pygame.transform.scale2x(
+bg_img = pygame.transform.scale2x(
     pygame.image.load(os.path.join('imgs', 'bg.png')))
 
 STAT_FONT = pygame.font.SysFont('comicsans', 50)
+win = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
+pygame.display.set_caption('Flappy Birb')
 
 # Creating the key elements of the game: bird, pipe and base
 
 
 class Bird:
-    IMGS = BIRDS_IMGS
+    IMGS = bird_imgs
     MAX_ROTATION = 25
     ROTATION_VEL = 20
     ANIMATION_TIME = 5
@@ -97,8 +104,8 @@ class Pipe:
         self.height = 0
         self.top = 0
         self.bottom = 0
-        self.PIPE_TOP = pygame.transform.flip(PIPE_IMG, False, True)
-        self.PIPE_BOTTOM = PIPE_IMG
+        self.PIPE_TOP = pygame.transform.flip(pipe_img, False, True)
+        self.PIPE_BOTTOM = pipe_img
         self.passed = False
         self.set_height()
 
@@ -132,8 +139,8 @@ class Pipe:
 
 class Base:
     VEL = 5
-    WIDTH = BASE_IMG.get_width()
-    IMG = BASE_IMG
+    WIDTH = base_img.get_width()
+    IMG = base_img
 
     def __init__(self, y):
         self.y = y
@@ -155,25 +162,36 @@ class Base:
         win.blit(self.IMG, (self.x2, self.y))
 
 
-def draw_win(win, bird, pipes, base, score):
-    win.blit(BG_IMG, (0, 0))
+def draw_win(win, birds, pipes, base, score):
+    win.blit(bg_img, (0, 0))
 
     for pipe in pipes:
         pipe.draw(win)
 
-    text = STAT_FONT.render('Score: ' + str(score), 1, (255, 255, 255))
-    win.blit(text, (WIN_WIDTH - 10 - text.get_width(), 10))
-
     base.draw(win)
-    bird.draw(win)
+    for bird in birds:
+        bird.draw(win)
+    text = STAT_FONT.render('Score: ' + str(score), 1, (255, 255, 255))
+    win.blit(text, (WIN_WIDTH - text.get_width() - 15, 10))
+
+    
     pygame.display.update()
 
 
-def main():
-    bird = Bird(230, 350)
+def birbs(genomes, config):
+    nets = []
+    ge = []
+    birds = []
+
+    for _, g in genomes:
+        net = neat.nn.FeedForwardNetwork.create(g, config)
+        nets.append(net)
+        birds.append(Bird(230, 350))
+        g.fitness = 0
+        ge.append(g)
+
     base = Base(730)
     pipes = [Pipe(700)]
-    win = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
     clock = pygame.time.Clock()
     score = 0
     running = True
@@ -182,49 +200,81 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-        # bird.move()
+                pygame.quit()
+                quit()
+
+        pipe_ind = 0
+        if len(birds) > 0:
+            if len(pipes) > 1 and birds[0].x > pipes[0].x + pipes[0].PIPE_TOP.get_width():
+                pipe_ind = 1
+            else:
+                running = False
+                break
+
+        for x, bird in enumerate(birds):
+            bird.move()
+            ge[x].fitness += 0.1
+
+            output = nets[x].activate((bird.y, abs(
+                bird.y - pipes[pipe_ind].height), abs(bird.y - pipes[pipe_ind].bottom)))
+
+            if output[0] > 0.5:
+                bird.jump()
         add_pipe = False
+        base.move()
         remove = []
         for pipe in pipes:
-            if pipe.collide(bird):
-                pass
+            pipe.move()
+            for bird in birds:
+                if pipe.collide(bird):
+                    ge[x].fitness -= 1
+                    birds.pop(x)
+                    nets.pop(x)
+                    ge.pop(x)
 
+                if not pipe.passed and pipe.x < bird.x:
+                    pipe.passed = True
+                    add_pipe = True
             if pipe.x + pipe.PIPE_TOP.get_width() < 0:
                 remove.append(pipe)
-
-            if not pipe.passed and pipe.x < bird.x:
-                pipe.passed = True
-                add_pipe = True
-
-            pipe.move()
+            
 
         if add_pipe:
             score += 1
-            pipes.append(Pipe(600))
+            for g in ge:
+                g.fitness += 5
+            pipes.append(Pipe(WIN_WIDTH))
 
         for r in remove:
             pipes.remove(r)
 
-        if bird.y + bird.img.get_height() >= 730:
-            pass
+        for bird in birds:
+            if bird.y + bird.img.get_height() >= 730 or bird.y < 0:
+                birds.pop(x)
+                nets.pop(x)
+                ge.pop(x)
 
-        base.move()
+        
 
-        draw_win(win, bird, pipes, base, score)
+        draw_win(win, birds, pipes, base, score)
 
-    pygame.quit()
-    quit()
-
-
-main()
 
 
 def run(config_path):
     config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction,
                                 neat.DefaultSpeciesSet, neat.DefaultStagnation, config_path)
 
+    population = neat.Population(config)
+    population.add_reporter(neat.StdOutReporter(True))
+    stats = neat.StatisticsReporter()
+    population.add_reporter(stats)
+
+    winner = population.run(birbs, 50)
+    print(winner)
+
 
 if __name__ == "__main__":
     local_dir = os.path.dirname(__file__)
-    config_path = os.path.join(local_dir, 'config-feedfoward.txt')
+    config_path = os.path.join(local_dir, 'config-feedforward.txt')
     run(config_path)
+'''
