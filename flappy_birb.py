@@ -12,7 +12,7 @@ WIN_HEIGHT = 800
 FLOOR = 730
 STAT_FONT = pygame.font.SysFont('comicsans', 50)
 END_FONT = pygame.font.SysFont('comicsans', 70)
-LINES = True
+LINES = False
 
 WIN = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
 pygame.display.set_caption('Flappy Birb')
